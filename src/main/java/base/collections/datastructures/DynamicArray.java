@@ -1,4 +1,4 @@
-package base.collections;
+package base.collections.datastructures;
 
 import java.util.Arrays;
 
