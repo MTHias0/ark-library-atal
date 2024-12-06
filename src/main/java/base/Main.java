@@ -6,6 +6,7 @@ import base.core.service.BookService;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.List;
 
 public class Main extends JFrame {
 
@@ -29,20 +30,25 @@ public class Main extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout());
 
         JButton addButton = new JButton("Add Book");
-        JButton listButton = new JButton("List Books");
-        JButton findButton = new JButton("Find Book by Code");
+        JButton listTitleButton = new JButton("List by Title");
+        JButton listAuthorButton = new JButton("List by Author");
+        JButton findTitleButton = new JButton("Find by Title");
+        JButton findAuthorButton = new JButton("Find by Author");
 
         buttonPanel.add(addButton);
-        buttonPanel.add(listButton);
-        buttonPanel.add(findButton);
+        buttonPanel.add(listTitleButton);
+        buttonPanel.add(listAuthorButton);
+        buttonPanel.add(findTitleButton);
+        buttonPanel.add(findAuthorButton);
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         add(panel);
 
-        // Button Action Listeners
         addButton.addActionListener(e -> addBookDialog());
-        listButton.addActionListener(e -> listBooksDialog());
-        findButton.addActionListener(e -> findBookDialog());
+        listTitleButton.addActionListener(e -> listBooksDialog(true));
+        listAuthorButton.addActionListener(e -> listBooksDialog(false));
+        findTitleButton.addActionListener(e -> findBookDialog(true));
+        findAuthorButton.addActionListener(e -> findBookDialog(false));
     }
 
     private void addBookDialog() {
@@ -53,54 +59,34 @@ public class Main extends JFrame {
         JPanel inputPanel = new JPanel();
         inputPanel.add(new JLabel("Title:"));
         inputPanel.add(titleField);
-        inputPanel.add(Box.createHorizontalStrut(15)); // Space between fields
         inputPanel.add(new JLabel("Author:"));
         inputPanel.add(authorField);
-        inputPanel.add(Box.createHorizontalStrut(15));
         inputPanel.add(new JLabel("Year:"));
         inputPanel.add(yearField);
 
-        int result = JOptionPane.showConfirmDialog(this, inputPanel,
-                "Add Book", JOptionPane.OK_CANCEL_OPTION);
-
+        int result = JOptionPane.showConfirmDialog(this, inputPanel, "Add Book", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
             String title = titleField.getText();
             String author = authorField.getText();
             int year = Integer.parseInt(yearField.getText());
 
-            Book book = new Book();
-            book.setTitle(title);
-            book.setAuthor(author);
-            book.setYear(year);
-
-            bookService.create(book);
+            bookService.create(title, author, year);
             JOptionPane.showMessageDialog(this, "Book added successfully!");
         }
     }
 
-    private void listBooksDialog() {
-        Object[] options = {"Title", "Author"};
-        int orderBy = JOptionPane.showOptionDialog(this, "Order by:",
-                "Order Books", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
-                null, options, options[0]);
-
-        boolean orderByTitle = orderBy == 0;
-
-        // Clear current table data
+    private void listBooksDialog(boolean orderByTitle) {
         tableModel.setRowCount(0);
-
-        // Populate table with sorted book list
-        for (int i = 0; i < bookService.findAll(orderByTitle).size(); i++) {
-            Book book = (Book) bookService.findAll(orderByTitle).find(i);
+        List<Book> books = bookService.findAll(orderByTitle);
+        for (Book book : books) {
             tableModel.addRow(new Object[]{book.getCode(), book.getTitle(), book.getAuthor(), book.getYear()});
         }
     }
 
-    private void findBookDialog() {
-        String codeStr = JOptionPane.showInputDialog(this, "Enter Book Code:");
-        if (codeStr != null) {
-            long code = Long.parseLong(codeStr);
-            Book book = bookService.findById(code);
+    private void findBookDialog(boolean byTitle) {
+        String input = JOptionPane.showInputDialog(this, byTitle ? "Enter Title:" : "Enter Author:");
+        if (input != null) {
+            Book book = byTitle ? bookService.findByTitle(input) : bookService.findByAuthor(input);
             if (book != null) {
                 JOptionPane.showMessageDialog(this,
                         "Book found:\nCode: " + book.getCode() +
